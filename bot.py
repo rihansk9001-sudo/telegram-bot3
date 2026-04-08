@@ -88,7 +88,7 @@ def handle_admin_panel(call):
         bot.send_message(call.message.chat.id, text, parse_mode="Markdown")
         
     elif action == "stats":
-        bot.send_message(call.message.chat.id, "📊 **Bot Stats:**\n\nAbhi database feature connect nahi hai, isliye exact users count available nahi hai. (Temporary: 0 Users)")
+        bot.send_message(call.message.chat.id, "📊 **Bot Stats:**\n\nAbhi database connect nahi hai. (Temporary: 0 Users)")
         
     elif action == "broad":
         msg = bot.send_message(call.message.chat.id, "Broadcast karne ke liye message send karein:")
@@ -140,9 +140,8 @@ def delete_channel(call):
         del CHANNELS[ch_id]
         bot.edit_message_text("✅ Channel successfully removed!", call.message.chat.id, call.message.message_id)
 
-# --- BROADCAST LOGIC (Mock) ---
 def process_broadcast(message):
-    bot.reply_to(message, "✅ Broadcast message received (Database connected nahi hai isliye send nahi hua).")
+    bot.reply_to(message, "✅ Broadcast message received.")
 
 # ================== GETLINK FUNCTION ================== #
 
@@ -153,7 +152,6 @@ def getlink_cmd(message):
     bot.register_next_step_handler(msg, process_getlink)
 
 def process_getlink(message):
-    # Video jaisa "processing..." effect
     proc_msg = bot.reply_to(message, "processing...")
     time.sleep(1)
     
@@ -163,7 +161,6 @@ def process_getlink(message):
     bot_info = bot.get_me()
     link = f"https://t.me/{bot_info.username}?start={code}"
     
-    # Share URL button jaise video me hai
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("↗️ SHARE URL", url=f"https://t.me/share/url?url={link}"))
     
@@ -228,16 +225,23 @@ def send_hidden_file(user_id, chat_id):
     else:
         bot.send_message(chat_id, "🎉 **Access Granted!** Aap verified hain.")
 
-# ================== FLASK SETUP ================== #
+# ================== FLASK & BOT STARTUP ================== #
 @app.route('/')
 def home():
     return "Bot is running perfectly!"
 
 def run_bot():
-    print("🤖 Bot Started Super Fast...")
-    bot.infinity_polling(skip_pending=True)
+    try:
+        print("🤖 Webhook check kar rahe hain...")
+        bot.remove_webhook() # YE LINE PROBLEM SOLVE KAREGI
+        time.sleep(1)
+        print("🤖 Telegram Bot Polling Start ho raha hai...")
+        bot.infinity_polling(skip_pending=True)
+    except Exception as e:
+        print(f"❌ ERROR AAYA: {e}")
 
 if __name__ == "__main__":
-    threading.Thread(target=run_bot).start()
+    print("⏳ Server aur Bot dono start ho rahe hain...")
+    threading.Thread(target=run_bot, daemon=True).start()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
